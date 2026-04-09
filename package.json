@@ -25,9 +25,11 @@
     "workers-ai-provider": "^3.1.10",
     "zod": "^4.3.6"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.31.2",
-    "@cloudflare/workers-types": "^4.20260405.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",

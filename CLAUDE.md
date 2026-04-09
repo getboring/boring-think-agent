@@ -17,6 +17,7 @@ Built on Cloudflare's best packages: @cloudflare/ai-chat, @cloudflare/shell, @cl
 ## Development
 ```bash
 npm install
+npm run types     # generate worker-configuration.d.ts (run after changing wrangler.jsonc)
 npm run dev       # starts local dev with remote AI binding
 npm run deploy    # build + deploy to Cloudflare
 ```

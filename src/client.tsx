@@ -351,7 +351,7 @@ function Chat() {
     onOpen: useCallback(() => setConnectionStatus("connected"), []),
     onClose: useCallback(() => setConnectionStatus("disconnected"), []),
     onError: useCallback(
-      (error: Event) => console.error("WebSocket error:", error),
+      () => setConnectionStatus("disconnected"),
       []
     )
   });
