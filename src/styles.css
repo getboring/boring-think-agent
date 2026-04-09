@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,ts,tsx}";
+@source "../node_modules/streamdown/**/*.{js,ts,tsx}";
+@source "../node_modules/@streamdown/**/*.{js,ts,tsx}";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.sd-theme {
+  --sd-color-bg: var(--color-kumo-base);
+  --sd-color-text: var(--color-kumo-default);
+  --sd-code-font: var(--font-mono);
+  --sd-code-size: 0.8125rem;
+  --sd-code-bg: var(--color-kumo-elevated);
+  --sd-code-border: var(--color-kumo-line);
+  --sd-code-text: var(--color-kumo-default);
+  --sd-link-color: var(--color-kumo-accent);
+  --sd-hr-color: var(--color-kumo-line);
+
+  p {
+    margin-bottom: 0.75em;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+  pre {
+    margin: 0.75em 0;
+    padding: 0.75em;
+    border-radius: 0.5rem;
+    border: 1px solid var(--sd-code-border);
+    background: var(--sd-code-bg);
+    overflow-x: auto;
+  }
+  code:not(pre code) {
+    padding: 0.15em 0.35em;
+    border-radius: 0.25rem;
+    background: var(--sd-code-bg);
+    font-size: var(--sd-code-size);
+    font-family: var(--sd-code-font);
+  }
+  ul,
+  ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+  li {
+    margin-bottom: 0.25em;
+  }
+  a {
+    color: var(--sd-link-color);
+    text-decoration: underline;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 1em 0 0.5em;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 1.25rem;
+  }
+  h2 {
+    font-size: 1.125rem;
+  }
+  h3 {
+    font-size: 1rem;
+  }
+  hr {
+    border-color: var(--sd-hr-color);
+    margin: 1em 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75em 0;
+    font-size: 0.875rem;
+  }
+  th,
+  td {
+    border: 1px solid var(--sd-code-border);
+    padding: 0.375rem 0.75rem;
+    text-align: left;
+  }
+  th {
+    background: var(--sd-code-bg);
+    font-weight: 600;
+  }
+  blockquote {
+    border-left: 3px solid var(--sd-link-color);
+    padding-left: 0.75em;
+    margin: 0.75em 0;
+    opacity: 0.85;
+  }
+}
