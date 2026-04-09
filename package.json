@@ -8,6 +8,7 @@
     "build": "vite build",
     "deploy": "vite build && wrangler deploy",
     "types": "wrangler types",
+    "types:check": "wrangler types && tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {
