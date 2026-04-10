@@ -8,8 +8,11 @@ An AI coding assistant built on Cloudflare Workers with a persistent virtual fil
 - **Sandboxed Code Execution** — Run JavaScript safely in an isolate-backed sandbox via `runStateCode`
 - **Git Integration** — Init, add, commit, log, diff, status (all via isomorphic-git)
 - **Streaming Chat** — Real-time AI responses with markdown rendering
-- **File Browser** — Visual sidebar for browsing, viewing, and managing workspace files
+- **File Browser** — Visual sidebar for browsing, viewing, and deleting workspace files
+- **File Delete UI** — Trash icon on hover (always visible on mobile); disabled during AI streaming
+- **Mobile Responsive** — Sidebar drawer with overlay, hamburger toggle, `h-dvh` for iOS Safari safety
 - **Dark/Light Theme** — Toggle between themes with persistence
+- **Workspace Stats** — R2 file count and storage usage displayed in sidebar footer
 
 ## Quick Start
 

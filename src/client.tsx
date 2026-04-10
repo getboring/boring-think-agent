@@ -32,7 +32,8 @@ import {
   InfoIcon,
   TerminalIcon,
   MoonIcon,
-  SunIcon
+  SunIcon,
+  ListIcon
 } from "@phosphor-icons/react";
 import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
@@ -69,8 +70,10 @@ const FileBrowser = forwardRef<
   {
     agent: { call: (method: string, args: unknown[]) => Promise<unknown> };
     isConnected: boolean;
+    isStreaming: boolean;
+    onClose: () => void;
   }
->(function FileBrowser({ agent, isConnected }, ref) {
+>(function FileBrowser({ agent, isConnected, isStreaming, onClose }, ref) {
   const [currentPath, setCurrentPath] = useState("/");
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,6 +85,7 @@ const FileBrowser = forwardRef<
     fileCount: number;
     directoryCount: number;
     totalBytes: number;
+    r2FileCount?: number;
   } | null>(null);
 
   const loadDir = useCallback(
@@ -115,12 +119,28 @@ const FileBrowser = forwardRef<
         fileCount: number;
         directoryCount: number;
         totalBytes: number;
+        r2FileCount?: number;
       };
       setInfo(result);
     } catch {
       // ignore
     }
   }, [agent, isConnected]);
+
+  const deleteFile = useCallback(
+    async (path: string) => {
+      if (!isConnected || isStreaming) return;
+      try {
+        await agent.call("deleteFileAtPath", [path]);
+        setSelectedFile((prev) => (prev?.path === path ? null : prev));
+        loadDir(currentPath);
+        loadInfo();
+      } catch {
+        // ignore
+      }
+    },
+    [agent, isConnected, isStreaming, currentPath, loadDir, loadInfo]
+  );
 
   useEffect(() => {
     if (isConnected) {
@@ -140,11 +160,13 @@ const FileBrowser = forwardRef<
     setSelectedFile(null);
     loadDir(path);
     loadInfo();
+    onClose();
   };
 
   const openFile = useCallback(
     async (path: string) => {
       if (!isConnected) return;
+      onClose();
       try {
         const content = (await agent.call("readFileContent", [
           path
@@ -157,7 +179,7 @@ const FileBrowser = forwardRef<
         setSelectedFile({ path, content: "(error reading file)" });
       }
     },
-    [agent, isConnected]
+    [agent, isConnected, onClose]
   );
 
   const parentPath =
@@ -229,24 +251,37 @@ const FileBrowser = forwardRef<
               </button>
             ))}
             {files.map((entry) => (
-              <button
-                type="button"
+              <div
                 key={entry.path}
-                onClick={() => openFile(entry.path)}
-                className={`w-full px-3 py-1.5 flex items-center gap-2 hover:bg-kumo-elevated text-left ${
+                className={`group flex items-center hover:bg-kumo-elevated ${
                   selectedFile?.path === entry.path ? "bg-kumo-elevated" : ""
                 }`}
               >
-                <FileIcon size={14} className="text-kumo-subtle shrink-0" />
-                <span className="text-xs text-kumo-default truncate flex-1">
-                  {entry.name}
-                </span>
-                <span className="text-[10px] text-kumo-inactive shrink-0">
-                  {entry.size > 1024
-                    ? `${(entry.size / 1024).toFixed(1)}K`
-                    : `${entry.size}B`}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openFile(entry.path)}
+                  className="flex-1 min-w-0 px-3 py-1.5 flex items-center gap-2 text-left"
+                >
+                  <FileIcon size={14} className="text-kumo-subtle shrink-0" />
+                  <span className="text-xs text-kumo-default truncate flex-1">
+                    {entry.name}
+                  </span>
+                  <span className="text-[10px] text-kumo-inactive shrink-0 sm:group-hover:opacity-0 transition-opacity">
+                    {entry.size > 1024
+                      ? `${(entry.size / 1024).toFixed(1)}K`
+                      : `${entry.size}B`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteFile(entry.path)}
+                  className="shrink-0 px-2 py-1.5 text-kumo-inactive hover:text-kumo-danger sm:opacity-0 sm:group-hover:opacity-100 transition-opacity disabled:opacity-20"
+                  aria-label={`Delete ${entry.name}`}
+                  disabled={isStreaming}
+                >
+                  <TrashIcon size={11} />
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -280,6 +315,9 @@ const FileBrowser = forwardRef<
             {info.totalBytes > 1024
               ? `${(info.totalBytes / 1024).toFixed(1)} KB`
               : `${info.totalBytes} B`}
+            {(info.r2FileCount ?? 0) > 0 && (
+              <>, <span className="text-kumo-subtle">{info.r2FileCount} in R2</span></>
+            )}
           </span>
         </div>
       )}
@@ -342,6 +380,7 @@ function Chat() {
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>("connecting");
   const [input, setInput] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileBrowserRef = useRef<FileBrowserHandle>(null);
 
@@ -375,6 +414,14 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const send = useCallback(() => {
     const text = input.trim();
     if (!text || isStreaming) return;
@@ -383,9 +430,22 @@ function Chat() {
   }, [input, isStreaming, sendMessage]);
 
   return (
-    <div className="flex h-screen bg-kumo-elevated">
+    <div className="flex h-dvh overflow-hidden bg-kumo-elevated">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar — File Browser */}
-      <div className="w-64 border-r border-kumo-line bg-kumo-base flex flex-col shrink-0">
+      <div
+        id="workspace-sidebar"
+        className={`fixed md:static md:inset-auto inset-y-0 left-0 z-30 w-64 border-r border-kumo-line bg-kumo-base flex flex-col shrink-0 transition-transform duration-200 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
         <div className="px-3 py-3 border-b border-kumo-line">
           <div className="flex items-center gap-2">
             <TerminalIcon size={16} className="text-kumo-accent" />
@@ -402,39 +462,54 @@ function Chat() {
             }
           }
           isConnected={isConnected}
+          isStreaming={isStreaming}
+          onClose={() => setSidebarOpen(false)}
         />
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="px-5 py-3 bg-kumo-base border-b border-kumo-line">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h1 className="text-lg font-semibold text-kumo-default">
+        <header className="px-4 py-3 bg-kumo-base border-b border-kumo-line">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<ListIcon size={16} />}
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="md:hidden shrink-0"
+                aria-label="Toggle workspace"
+                aria-expanded={sidebarOpen}
+                aria-controls="workspace-sidebar"
+              />
+              <h1 className="text-base sm:text-lg font-semibold text-kumo-default truncate">
                 BoringWorks Think Agent
               </h1>
-              <Badge variant="secondary">
-                <TerminalIcon size={12} weight="bold" className="mr-1" />
-                AI + Files
-              </Badge>
+              <div className="hidden sm:flex">
+                <Badge variant="secondary">
+                  <TerminalIcon size={12} weight="bold" className="mr-1" />
+                  AI + Files
+                </Badge>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <ConnectionIndicator status={connectionStatus} />
               <ModeToggle />
               <Button
                 variant="secondary"
+                size="sm"
                 icon={<TrashIcon size={16} />}
                 onClick={clearHistory}
               >
-                Clear
+                <span className="hidden sm:inline">Clear</span>
               </Button>
             </div>
           </div>
         </header>
 
         {/* Explainer */}
-        <div className="px-5 pt-4">
+        <div className="px-3 sm:px-5 pt-4">
           <Surface className="p-4 rounded-xl ring ring-kumo-line">
             <div className="flex gap-3">
               <InfoIcon
@@ -461,7 +536,7 @@ function Chat() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-5 py-6 space-y-5">
+          <div className="max-w-3xl mx-auto px-3 sm:px-5 py-6 space-y-3 sm:space-y-5">
             {messages.length === 0 && (
               <Empty
                 icon={<TerminalIcon size={32} />}
@@ -638,7 +713,7 @@ function Chat() {
               e.preventDefault();
               send();
             }}
-            className="max-w-3xl mx-auto px-5 py-4"
+            className="max-w-3xl mx-auto px-3 sm:px-5 py-4"
           >
             <div className="flex items-end gap-3 rounded-xl border border-kumo-line bg-kumo-base p-3 shadow-sm focus-within:ring-2 focus-within:ring-kumo-ring focus-within:border-transparent transition-shadow">
               <InputArea
@@ -650,7 +725,7 @@ function Chat() {
                     send();
                   }
                 }}
-                placeholder='Try: "Plan edits for /src/config.json and apply them with the state runtime"'
+                placeholder='Ask me to read, write, or edit files — e.g. "Refactor /src/config.ts"'
                 disabled={!isConnected || isStreaming}
                 rows={2}
                 className="flex-1 !ring-0 focus:!ring-0 !shadow-none !bg-transparent !outline-none"

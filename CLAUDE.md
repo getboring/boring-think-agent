@@ -25,13 +25,20 @@ npm run deploy    # build + deploy to Cloudflare
 
 ## Architecture
 - `src/server.ts` — WorkspaceChatAgent extends Think<Env> (Durable Object). Handles chat, filesystem tools, git tools, sandboxed code execution. Think provides session persistence, message history, and lifecycle hooks.
-- `src/client.tsx` — React frontend. File browser sidebar, chat interface, theme toggle, streaming markdown.
+- `src/client.tsx` — React frontend. Mobile-responsive file browser sidebar (drawer on mobile, static on desktop), chat interface, theme toggle, streaming markdown. File delete UI with trash icon (always visible on mobile, hover-revealed on desktop). r2FileCount and storage stats in sidebar footer.
 - `wrangler.jsonc` — Cloudflare config: AI binding, WorkerLoader, DO migrations, SPA routing.
 
 ## Key bindings (wrangler.jsonc)
 - `AI` — Workers AI (remote mode for local dev)
 - `LOADER` — WorkerLoader for DynamicWorkerExecutor
 - `WorkspaceChatAgent` — Durable Object namespace
+
+## UI Patterns
+- Sidebar: `fixed md:static md:inset-auto` with `translate-x-full` for mobile drawer
+- Root layout: `h-dvh overflow-hidden` (iOS Safari safe — no `h-screen`)
+- File rows: two sibling `<button>` elements (no nested interactive controls) — a11y compliant
+- Delete is disabled during AI streaming (`status === "streaming"`)
+- Escape key closes mobile drawer; selecting a file also closes it
 
 ## Conventions
 - Integer cents for money (never floating point)
