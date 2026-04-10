@@ -48,9 +48,10 @@ Requires a Cloudflare account with Workers AI enabled.
 
 ## Built With
 
-- [@cloudflare/ai-chat](https://www.npmjs.com/package/@cloudflare/ai-chat) — AIChatAgent base class + React hooks
-- [@cloudflare/shell](https://www.npmjs.com/package/@cloudflare/shell) — Persistent virtual filesystem
-- [@cloudflare/codemode](https://www.npmjs.com/package/@cloudflare/codemode) — Sandboxed code execution
+- [@cloudflare/think](https://www.npmjs.com/package/@cloudflare/think) — Think<Env> agent base class with session persistence and lifecycle hooks
+- [@cloudflare/ai-chat](https://www.npmjs.com/package/@cloudflare/ai-chat) — React chat hooks (useAgentChat)
+- [@cloudflare/shell](https://www.npmjs.com/package/@cloudflare/shell) — Persistent virtual filesystem (SQLite + R2)
+- [@cloudflare/codemode](https://www.npmjs.com/package/@cloudflare/codemode) — Sandboxed code execution in isolates
 - [@cloudflare/kumo](https://www.npmjs.com/package/@cloudflare/kumo) — UI component library
 - [workers-ai-provider](https://www.npmjs.com/package/workers-ai-provider) — AI SDK provider for Workers AI
 - [agents](https://www.npmjs.com/package/agents) — Cloudflare Agents SDK
